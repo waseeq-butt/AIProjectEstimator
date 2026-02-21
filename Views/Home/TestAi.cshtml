@@ -1,0 +1,86 @@
+@{
+    ViewData["Title"] = "Test AI API";
+}
+
+<div class="test-container">
+    <h1>Test AI API</h1>
+    
+    <form id="testForm">
+        <div class="input-group">
+            <label for="inputText">Enter text to summarize:</label>
+            <textarea id="inputText" name="inputText" placeholder="Type or paste your text here..."></textarea>
+        </div>
+        
+        <button type="submit" id="goButton" class="send-button">Go</button>
+    </form>
+    
+    <div id="resultBox" class="result-box" style="display: none;">
+        <h3>AI Summary:</h3>
+        <p id="resultText"></p>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+        <a href="@Url.Action("Index", "Home")" class="test-button">Back to Home</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const testForm = document.getElementById('testForm');
+        const goButton = document.getElementById('goButton');
+        const inputText = document.getElementById('inputText');
+        const resultBox = document.getElementById('resultBox');
+        const resultText = document.getElementById('resultText');
+        const messageDiv = document.getElementById('message');
+
+        testForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = inputText.value.trim();
+            
+            if (!text) {
+                showMessage('Please enter some text', 'error');
+                return;
+            }
+            
+            goButton.disabled = true;
+            goButton.textContent = 'Processing...';
+            resultBox.style.display = 'none';
+            messageDiv.textContent = '';
+            
+            try {
+                const formData = new FormData();
+                formData.append('inputText', text);
+                
+                const response = await fetch('/Home/TestAi', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        resultText.textContent = result.summary;
+                        resultBox.style.display = 'block';
+                        showMessage('Summary generated successfully!', 'success');
+                    }
+                } else {
+                    const error = await response.text();
+                    showMessage(error || 'Failed to generate summary', 'error');
+                }
+            } catch (error) {
+                showMessage('An error occurred: ' + error.message, 'error');
+            } finally {
+                goButton.disabled = false;
+                goButton.textContent = 'Go';
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
+    </script>
+}

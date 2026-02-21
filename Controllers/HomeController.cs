@@ -56,4 +56,28 @@ public class HomeController : Controller
         ViewBag.FileName = TempData["FileName"] as string ?? "Unknown";
         return View();
     }
+
+    public IActionResult TestAi()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> TestAi(string inputText)
+    {
+        if (string.IsNullOrWhiteSpace(inputText))
+        {
+            return BadRequest("Please enter some text");
+        }
+
+        try
+        {
+            var summary = await _aiService.SummarizeTextAsync(inputText, maxWords: 100);
+            return Ok(new { success = true, summary = summary });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error: {ex.Message}");
+        }
+    }
 }
