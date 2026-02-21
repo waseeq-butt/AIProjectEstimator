@@ -1,0 +1,6 @@
+@AiEstimator_HostAddress = http://localhost:5072
+
+GET {{AiEstimator_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
