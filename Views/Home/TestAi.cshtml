@@ -7,7 +7,7 @@
     
     <form id="testForm">
         <div class="input-group">
-            <label for="inputText">Enter text to summarize:</label>
+            <label for="inputText">Enter text to explain:</label>
             <textarea id="inputText" name="inputText" placeholder="Type or paste your text here..."></textarea>
         </div>
         
@@ -15,7 +15,7 @@
     </form>
     
     <div id="resultBox" class="result-box" style="display: none;">
-        <h3>AI Summary:</h3>
+        <h3>AI Explanation:</h3>
         <p id="resultText"></p>
     </div>
     
@@ -64,11 +64,11 @@
                     if (result.success) {
                         resultText.textContent = result.summary;
                         resultBox.style.display = 'block';
-                        showMessage('Summary generated successfully!', 'success');
+                        showMessage('Explanation generated successfully!', 'success');
                     }
                 } else {
                     const error = await response.text();
-                    showMessage(error || 'Failed to generate summary', 'error');
+                    showMessage(error || 'Failed to generate explanation', 'error');
                 }
             } catch (error) {
                 showMessage('An error occurred: ' + error.message, 'error');

@@ -2,6 +2,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient<AiEstimator.Services.PdfService>();
+builder.Services.AddHttpClient<AiEstimator.Services.OpenRouterService>();
 builder.Services.AddScoped<AiEstimator.Services.AiSummarizationService>();
 
 var app = builder.Build();

@@ -7,11 +7,13 @@ public class HomeController : Controller
 {
     private readonly PdfService _pdfService;
     private readonly AiSummarizationService _aiService;
+    private readonly OpenRouterService _openRouterService;
 
-    public HomeController(PdfService pdfService, AiSummarizationService aiService)
+    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService)
     {
         _pdfService = pdfService;
         _aiService = aiService;
+        _openRouterService = openRouterService;
     }
 
     public IActionResult Index()
@@ -72,8 +74,8 @@ public class HomeController : Controller
 
         try
         {
-            var summary = await _aiService.SummarizeTextAsync(inputText, maxWords: 100);
-            return Ok(new { success = true, summary = summary });
+            var explanation = await _openRouterService.ExplainTextAsync(inputText, maxWords: 100);
+            return Ok(new { success = true, summary = explanation });
         }
         catch (Exception ex)
         {
