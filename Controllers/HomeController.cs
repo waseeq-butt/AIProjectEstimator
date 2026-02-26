@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using AiEstimator.Services;
+using AiEstimator.Models;
 using System.Text.Json;
 
 namespace AiEstimator.Controllers;
@@ -11,14 +12,32 @@ public class HomeController : Controller
     private readonly OpenRouterService _openRouterService;
     private readonly GameEstimationService _gameEstimationService;
     private readonly PdfExportService _pdfExportService;
+    private readonly TeamAllocationService _teamAllocationService;
 
-    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService, GameEstimationService gameEstimationService, PdfExportService pdfExportService)
+    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService, GameEstimationService gameEstimationService, PdfExportService pdfExportService, TeamAllocationService teamAllocationService)
     {
         _pdfService = pdfService;
         _aiService = aiService;
         _openRouterService = openRouterService;
         _gameEstimationService = gameEstimationService;
         _pdfExportService = pdfExportService;
+        _teamAllocationService = teamAllocationService;
+    }
+
+    private List<TeamMember> GetTeamFromSession()
+    {
+        var teamJson = HttpContext.Session.GetString("Team");
+        if (string.IsNullOrEmpty(teamJson))
+        {
+            return new List<TeamMember>();
+        }
+        return JsonSerializer.Deserialize<List<TeamMember>>(teamJson) ?? new List<TeamMember>();
+    }
+
+    private void SaveTeamToSession(List<TeamMember> team)
+    {
+        var teamJson = JsonSerializer.Serialize(team);
+        HttpContext.Session.SetString("Team", teamJson);
     }
 
     public IActionResult Index()
@@ -45,6 +64,12 @@ public class HomeController : Controller
             var extractedText = await _pdfService.ExtractTextFromPdfAsync(stream);
             
             var estimationResult = await _gameEstimationService.EstimateGameFeaturesAsync(extractedText);
+            
+            var team = GetTeamFromSession();
+            if (team.Count > 0)
+            {
+                estimationResult = _teamAllocationService.AllocateTeamAndCalculateCosts(estimationResult, team);
+            }
             
             TempData["EstimationResult"] = JsonSerializer.Serialize(estimationResult);
             TempData["FileName"] = pdfFile.FileName;
@@ -123,5 +148,51 @@ public class HomeController : Controller
         {
             return BadRequest($"Error: {ex.Message}");
         }
+    }
+
+    public IActionResult ManageTeam()
+    {
+        var team = GetTeamFromSession();
+        var viewModel = new TeamManagementViewModel
+        {
+            TeamMembers = team
+        };
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    public IActionResult AddTeamMember([FromBody] TeamMember member)
+    {
+        if (string.IsNullOrWhiteSpace(member.Name) || 
+            string.IsNullOrWhiteSpace(member.Role) || 
+            string.IsNullOrWhiteSpace(member.Level) || 
+            member.HourlyRate <= 0)
+        {
+            return BadRequest("All fields are required and rate must be greater than 0");
+        }
+
+        var team = GetTeamFromSession();
+        member.Id = Guid.NewGuid().ToString();
+        team.Add(member);
+        SaveTeamToSession(team);
+
+        return Ok(new { success = true, member = member });
+    }
+
+    [HttpDelete]
+    public IActionResult DeleteTeamMember(string id)
+    {
+        var team = GetTeamFromSession();
+        var member = team.FirstOrDefault(m => m.Id == id);
+        
+        if (member == null)
+        {
+            return NotFound("Team member not found");
+        }
+
+        team.Remove(member);
+        SaveTeamToSession(team);
+
+        return Ok(new { success = true });
     }
 }

@@ -1,11 +1,31 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient<AiEstimator.Services.PdfService>();
-builder.Services.AddHttpClient<AiEstimator.Services.OpenRouterService>();
-builder.Services.AddHttpClient<AiEstimator.Services.GameEstimationService>();
+builder.Services.AddHttpClient<AiEstimator.Services.PdfService>()
+    .ConfigureHttpClient(client =>
+    {
+        client.Timeout = TimeSpan.FromMinutes(3);
+    });
+builder.Services.AddHttpClient<AiEstimator.Services.OpenRouterService>()
+    .ConfigureHttpClient(client =>
+    {
+        client.Timeout = TimeSpan.FromMinutes(3);
+    });
+builder.Services.AddHttpClient<AiEstimator.Services.GameEstimationService>()
+    .ConfigureHttpClient(client =>
+    {
+        client.Timeout = TimeSpan.FromMinutes(5);
+    });
 builder.Services.AddScoped<AiEstimator.Services.AiSummarizationService>();
 builder.Services.AddScoped<AiEstimator.Services.PdfExportService>();
+builder.Services.AddScoped<AiEstimator.Services.TeamAllocationService>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -20,6 +40,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(

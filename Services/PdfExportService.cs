@@ -60,6 +60,12 @@ public class PdfExportService
             column.Item().PaddingTop(10).Element(c => ComposeTotals(c, estimation));
             
             column.Item().PaddingTop(20).Element(c => ComposeFeatureTable(c, estimation));
+
+            if (estimation.Billing != null && estimation.Team.Any())
+            {
+                column.Item().PageBreak();
+                column.Item().PaddingTop(20).Element(c => ComposeBillingSection(c, estimation));
+            }
         });
     }
 
@@ -151,6 +157,77 @@ public class PdfExportService
                     table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text(totalHours.ToString()).FontSize(9).Bold().FontColor(Colors.Blue.Medium);
                     table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(feature.Notes).FontSize(8).Italic().FontColor(Colors.Grey.Darken1);
                 }
+            });
+        });
+    }
+
+    private void ComposeBillingSection(IContainer container, GameEstimationResult estimation)
+    {
+        container.Column(column =>
+        {
+            column.Item().Text("Project Billing & Resource Allocation").FontSize(18).Bold().FontColor(Colors.Green.Medium);
+            
+            column.Item().PaddingTop(15).Row(row =>
+            {
+                row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Column(col =>
+                {
+                    col.Item().AlignCenter().Text("Development Cost").FontSize(10).Bold();
+                    col.Item().AlignCenter().PaddingTop(5).Text($"${estimation.Billing!.TotalDevCost:N2}").FontSize(16).Bold().FontColor(Colors.Green.Medium);
+                });
+
+                row.Spacing(10);
+
+                row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).Column(col =>
+                {
+                    col.Item().AlignCenter().Text("Art & Design Cost").FontSize(10).Bold();
+                    col.Item().AlignCenter().PaddingTop(5).Text($"${estimation.Billing!.TotalArtCost:N2}").FontSize(16).Bold().FontColor(Colors.Green.Medium);
+                });
+
+                row.Spacing(10);
+
+                row.RelativeItem().Background(Colors.Green.Medium).Padding(10).Column(col =>
+                {
+                    col.Item().AlignCenter().Text("Total Project Cost").FontSize(10).Bold().FontColor(Colors.White);
+                    col.Item().AlignCenter().PaddingTop(5).Text($"${estimation.Billing!.GrandTotal:N2}").FontSize(18).Bold().FontColor(Colors.White);
+                });
+            });
+
+            column.Item().PaddingTop(20).Text("Team Member Billing").FontSize(14).Bold().FontColor(Colors.Green.Medium);
+
+            column.Item().PaddingTop(10).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(3);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).Text("Team Member").FontSize(9).Bold().FontColor(Colors.White);
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).Text("Role").FontSize(9).Bold().FontColor(Colors.White);
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).Text("Level").FontSize(9).Bold().FontColor(Colors.White);
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).AlignCenter().Text("Total Hours").FontSize(9).Bold().FontColor(Colors.White);
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).AlignRight().Text("Rate/Hour").FontSize(9).Bold().FontColor(Colors.White);
+                    header.Cell().Background(Colors.Green.Medium).Padding(5).AlignRight().Text("Total Cost").FontSize(9).Bold().FontColor(Colors.White);
+                });
+
+                foreach (var billing in estimation.Billing!.TeamMemberBillings)
+                {
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(billing.TeamMemberName).FontSize(9).Bold();
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(billing.Role).FontSize(9);
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(billing.Level).FontSize(9);
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{billing.TotalHours} hrs").FontSize(9);
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text($"${billing.HourlyRate:N2}").FontSize(9);
+                    table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignRight().Text($"${billing.TotalCost:N2}").FontSize(9).Bold().FontColor(Colors.Green.Medium);
+                }
+
+                table.Cell().ColumnSpan(5).Background(Colors.Grey.Lighten3).Padding(5).AlignRight().Text("Grand Total").FontSize(10).Bold();
+                table.Cell().Background(Colors.Green.Lighten4).Padding(5).AlignRight().Text($"${estimation.Billing!.GrandTotal:N2}").FontSize(11).Bold().FontColor(Colors.Green.Darken2);
             });
         });
     }

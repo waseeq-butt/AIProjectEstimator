@@ -82,6 +82,65 @@
                 </table>
             </div>
         </div>
+
+        @if (estimationResult.Billing != null && estimationResult.Team.Any())
+        {
+            <div class="billing-section">
+                <h3>💰 Project Billing & Resource Allocation</h3>
+                
+                <div class="billing-totals">
+                    <div class="billing-card">
+                        <div class="billing-label">Development Cost</div>
+                        <div class="billing-value">@($"${estimationResult.Billing.TotalDevCost:N2}")</div>
+                    </div>
+                    <div class="billing-card">
+                        <div class="billing-label">Art & Design Cost</div>
+                        <div class="billing-value">@($"${estimationResult.Billing.TotalArtCost:N2}")</div>
+                    </div>
+                    <div class="billing-card highlight">
+                        <div class="billing-label">Total Project Cost</div>
+                        <div class="billing-value">@($"${estimationResult.Billing.GrandTotal:N2}")</div>
+                    </div>
+                </div>
+
+                <h4>Team Member Billing</h4>
+                <div class="table-responsive">
+                    <table class="billing-table">
+                        <thead>
+                            <tr>
+                                <th>Team Member</th>
+                                <th>Role</th>
+                                <th>Level</th>
+                                <th>Total Hours</th>
+                                <th>Rate/Hour</th>
+                                <th>Total Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var billing in estimationResult.Billing.TeamMemberBillings)
+                            {
+                                <tr>
+                                    <td class="member-name">@billing.TeamMemberName</td>
+                                    <td>
+                                        <span class="role-badge @billing.Role.ToLower()">@billing.Role</span>
+                                    </td>
+                                    <td>
+                                        <span class="level-badge @billing.Level.ToLower()">@billing.Level</span>
+                                    </td>
+                                    <td class="number">@billing.TotalHours hrs</td>
+                                    <td class="number">@($"${billing.HourlyRate:N2}")</td>
+                                    <td class="number cost">@($"${billing.TotalCost:N2}")</td>
+                                </tr>
+                            }
+                            <tr class="total-row">
+                                <td colspan="5" class="total-label">Grand Total</td>
+                                <td class="number grand-total">@($"${estimationResult.Billing.GrandTotal:N2}")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
     }
     
     <div class="actions">
@@ -225,12 +284,165 @@
         margin-bottom: 30px;
     }
 
-    .features-section h3 {
+    .features-section h3,
+    .billing-section h3 {
         color: #333;
         font-size: 24px;
         margin-bottom: 20px;
         padding-bottom: 10px;
         border-bottom: 2px solid #e0e5ff;
+    }
+
+    .billing-section {
+        margin-bottom: 30px;
+        padding-top: 20px;
+        border-top: 3px solid #667eea;
+    }
+
+    .billing-section h4 {
+        color: #667eea;
+        font-size: 18px;
+        margin-top: 25px;
+        margin-bottom: 15px;
+    }
+
+    .billing-totals {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .billing-card {
+        background: white;
+        border: 2px solid #e0e5ff;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .billing-card.highlight {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-color: #28a745;
+    }
+
+    .billing-card.highlight .billing-label,
+    .billing-card.highlight .billing-value {
+        color: white;
+    }
+
+    .billing-label {
+        font-size: 13px;
+        color: #666;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .billing-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #28a745;
+    }
+
+    .billing-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .billing-table thead {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .billing-table th {
+        padding: 12px 10px;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+    }
+
+    .billing-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #e0e5ff;
+    }
+
+    .billing-table tbody tr:hover {
+        background: #f8f9ff;
+    }
+
+    .billing-table .member-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .billing-table .cost {
+        color: #28a745;
+        font-weight: 700;
+        font-size: 15px;
+    }
+
+    .billing-table .total-row {
+        background: #f8f9ff;
+        font-weight: 700;
+    }
+
+    .billing-table .total-row:hover {
+        background: #f0f2ff !important;
+    }
+
+    .billing-table .total-label {
+        text-align: right;
+        font-size: 15px;
+        color: #333;
+    }
+
+    .billing-table .grand-total {
+        color: #28a745;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .role-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .role-badge.developer {
+        background: #007bff;
+        color: white;
+    }
+
+    .role-badge.artist {
+        background: #e83e8c;
+        color: white;
+    }
+
+    .level-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .level-badge.senior {
+        background: #28a745;
+        color: white;
+    }
+
+    .level-badge.junior {
+        background: #ffc107;
+        color: #333;
     }
 
     .table-responsive {
