@@ -10,13 +10,15 @@ public class HomeController : Controller
     private readonly AiSummarizationService _aiService;
     private readonly OpenRouterService _openRouterService;
     private readonly GameEstimationService _gameEstimationService;
+    private readonly PdfExportService _pdfExportService;
 
-    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService, GameEstimationService gameEstimationService)
+    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService, GameEstimationService gameEstimationService, PdfExportService pdfExportService)
     {
         _pdfService = pdfService;
         _aiService = aiService;
         _openRouterService = openRouterService;
         _gameEstimationService = gameEstimationService;
+        _pdfExportService = pdfExportService;
     }
 
     public IActionResult Index()
@@ -57,8 +59,8 @@ public class HomeController : Controller
 
     public IActionResult Result()
     {
-        var estimationJson = TempData["EstimationResult"] as string;
-        var fileName = TempData["FileName"] as string ?? "Unknown";
+        var estimationJson = TempData.Peek("EstimationResult") as string;
+        var fileName = TempData.Peek("FileName") as string ?? "Unknown";
         
         if (string.IsNullOrEmpty(estimationJson))
         {
@@ -73,6 +75,30 @@ public class HomeController : Controller
         ViewBag.EstimationResult = estimationResult;
         
         return View();
+    }
+
+    public IActionResult ExportPdf()
+    {
+        var estimationJson = TempData["EstimationResult"] as string;
+        var fileName = TempData["FileName"] as string ?? "GameDesignDocument.pdf";
+        
+        if (string.IsNullOrEmpty(estimationJson))
+        {
+            return BadRequest("No estimation data available for export");
+        }
+
+        var estimationResult = JsonSerializer.Deserialize<Models.GameEstimationResult>(estimationJson);
+        
+        if (estimationResult == null)
+        {
+            return BadRequest("Failed to parse estimation data");
+        }
+
+        var pdfBytes = _pdfExportService.GenerateEstimationPdf(estimationResult, fileName);
+        
+        var exportFileName = $"{Path.GetFileNameWithoutExtension(fileName)}_Estimation_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        
+        return File(pdfBytes, "application/pdf", exportFileName);
     }
 
     public IActionResult TestAi()

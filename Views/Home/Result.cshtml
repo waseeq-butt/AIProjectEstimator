@@ -85,6 +85,12 @@
     }
     
     <div class="actions">
+        <a asp-controller="Home" asp-action="ExportPdf" class="export-button">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export to PDF
+        </a>
         <a asp-controller="Home" asp-action="Index" class="back-button">Upload Another PDF</a>
     </div>
 </div>
@@ -327,20 +333,43 @@
     }
 
     .actions {
-        text-align: center;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
         margin-top: 30px;
+        flex-wrap: wrap;
     }
 
+    .export-button,
     .back-button {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         padding: 16px 40px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         text-decoration: none;
         border-radius: 10px;
         font-size: 16px;
         font-weight: 600;
         transition: all 0.3s ease;
+    }
+
+    .export-button {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .export-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+    }
+
+    .export-button svg {
+        flex-shrink: 0;
+    }
+
+    .back-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
 

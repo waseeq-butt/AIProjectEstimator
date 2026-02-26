@@ -5,6 +5,7 @@ builder.Services.AddHttpClient<AiEstimator.Services.PdfService>();
 builder.Services.AddHttpClient<AiEstimator.Services.OpenRouterService>();
 builder.Services.AddHttpClient<AiEstimator.Services.GameEstimationService>();
 builder.Services.AddScoped<AiEstimator.Services.AiSummarizationService>();
+builder.Services.AddScoped<AiEstimator.Services.PdfExportService>();
 
 var app = builder.Build();
 
