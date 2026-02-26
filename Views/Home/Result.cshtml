@@ -1,22 +1,88 @@
+@using AiEstimator.Models
 @{
-    ViewData["Title"] = "AI Document Summary";
+    ViewData["Title"] = "Game Development Estimation";
+    var estimationResult = ViewBag.EstimationResult as GameEstimationResult;
 }
 
 <div class="result-container">
     <div class="result-header">
-        <h1>AI Document Summary</h1>
+        <h1>Game Development Estimation</h1>
         <p class="file-name">File: @ViewBag.FileName</p>
-        <span class="badge">Max 250 words</span>
+        <span class="badge">Unity Engine</span>
     </div>
-    
-    <div class="summary-content">
-        <div class="summary-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="error-message">@ViewBag.Error</div>
+    }
+    else if (estimationResult != null)
+    {
+        <div class="project-summary">
+            <h3>Project Overview</h3>
+            <p>@estimationResult.ProjectSummary</p>
         </div>
-        <p class="summary-text">@ViewBag.Summary</p>
-    </div>
+
+        <div class="totals-grid">
+            <div class="total-card">
+                <div class="total-icon">💻</div>
+                <div class="total-label">Development</div>
+                <div class="total-value">@estimationResult.TotalDevHours hrs</div>
+                <div class="total-days">~@Math.Ceiling(estimationResult.TotalDevHours / 8.0) days</div>
+            </div>
+            <div class="total-card">
+                <div class="total-icon">🎨</div>
+                <div class="total-label">Art & Design</div>
+                <div class="total-value">@estimationResult.TotalArtHours hrs</div>
+                <div class="total-days">~@Math.Ceiling(estimationResult.TotalArtHours / 8.0) days</div>
+            </div>
+            <div class="total-card highlight">
+                <div class="total-icon">⏱️</div>
+                <div class="total-label">Total Project</div>
+                <div class="total-value">@estimationResult.TotalHours hrs</div>
+                <div class="total-days">~@Math.Ceiling(estimationResult.TotalHours / 8.0) days</div>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <h3>Feature Breakdown</h3>
+            <div class="table-responsive">
+                <table class="features-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Description</th>
+                            <th>Complexity</th>
+                            <th>Dev (hrs)</th>
+                            <th>Art (hrs)</th>
+                            <th>Total (hrs)</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var feature in estimationResult.Features)
+                        {
+                            var complexityClass = feature.Complexity.ToLower();
+                            var totalFeatureHours = feature.DevEstimateHours + feature.ArtEstimateHours;
+                            
+                            <tr>
+                                <td class="feature-name">@feature.Feature</td>
+                                <td class="description">@feature.Description</td>
+                                <td>
+                                    <span class="complexity-badge @complexityClass">
+                                        @feature.Complexity
+                                    </span>
+                                </td>
+                                <td class="number">@feature.DevEstimateHours</td>
+                                <td class="number">@feature.ArtEstimateHours</td>
+                                <td class="number total">@totalFeatureHours</td>
+                                <td class="notes">@feature.Notes</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
     
     <div class="actions">
         <a asp-controller="Home" asp-action="Index" class="back-button">Upload Another PDF</a>
@@ -25,7 +91,7 @@
 
 <style>
     .result-container {
-        max-width: 900px;
+        max-width: 1400px;
         margin: 40px auto;
         background: white;
         border-radius: 20px;
@@ -70,38 +136,199 @@
         letter-spacing: 0.5px;
     }
 
-    .summary-content {
+    .project-summary {
         background: linear-gradient(135deg, #f8f9ff 0%, #e8ebff 100%);
         border-radius: 15px;
-        padding: 40px;
+        padding: 25px;
         margin-bottom: 30px;
         border: 2px solid #e0e5ff;
-        position: relative;
     }
 
-    .summary-icon {
-        width: 50px;
-        height: 50px;
-        margin: 0 auto 20px;
+    .project-summary h3 {
         color: #667eea;
+        margin-bottom: 10px;
+        font-size: 20px;
     }
 
-    .summary-icon svg {
-        width: 100%;
-        height: 100%;
-    }
-
-    .summary-text {
-        font-size: 18px;
-        line-height: 1.8;
+    .project-summary p {
         color: #333;
-        text-align: justify;
+        line-height: 1.6;
         margin: 0;
-        font-weight: 400;
+        font-size: 16px;
+    }
+
+    .totals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .total-card {
+        background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        border: 2px solid #e0e5ff;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .total-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .total-card.highlight {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    .total-card.highlight .total-label,
+    .total-card.highlight .total-value,
+    .total-card.highlight .total-days {
+        color: white;
+    }
+
+    .total-icon {
+        font-size: 40px;
+        margin-bottom: 10px;
+    }
+
+    .total-label {
+        color: #666;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .total-value {
+        color: #667eea;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .total-days {
+        color: #999;
+        font-size: 14px;
+    }
+
+    .features-section {
+        margin-bottom: 30px;
+    }
+
+    .features-section h3 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e0e5ff;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .features-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    .features-table thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .features-table th {
+        padding: 15px 10px;
+        text-align: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    .features-table td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #e0e5ff;
+        vertical-align: top;
+    }
+
+    .features-table tbody tr:hover {
+        background: #f8f9ff;
+    }
+
+    .features-table .feature-name {
+        font-weight: 600;
+        color: #667eea;
+        min-width: 150px;
+    }
+
+    .features-table .description {
+        color: #555;
+        line-height: 1.5;
+        max-width: 300px;
+    }
+
+    .features-table .number {
+        text-align: center;
+        font-weight: 600;
+        color: #333;
+        min-width: 80px;
+    }
+
+    .features-table .number.total {
+        color: #667eea;
+        font-size: 16px;
+    }
+
+    .features-table .notes {
+        color: #666;
+        font-size: 13px;
+        font-style: italic;
+        max-width: 250px;
+    }
+
+    .complexity-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .complexity-badge.low {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .complexity-badge.medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .complexity-badge.high {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .error-message {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #f5c6cb;
     }
 
     .actions {
         text-align: center;
+        margin-top: 30px;
     }
 
     .back-button {
@@ -120,5 +347,24 @@
     .back-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    @@media (max-width: 768px) {
+        .result-container {
+            padding: 20px;
+        }
+
+        .totals-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .features-table {
+            font-size: 12px;
+        }
+
+        .features-table th,
+        .features-table td {
+            padding: 10px 5px;
+        }
     }
 </style>

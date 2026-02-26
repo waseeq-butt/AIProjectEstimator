@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using AiEstimator.Services;
+using System.Text.Json;
 
 namespace AiEstimator.Controllers;
 
@@ -8,12 +9,14 @@ public class HomeController : Controller
     private readonly PdfService _pdfService;
     private readonly AiSummarizationService _aiService;
     private readonly OpenRouterService _openRouterService;
+    private readonly GameEstimationService _gameEstimationService;
 
-    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService)
+    public HomeController(PdfService pdfService, AiSummarizationService aiService, OpenRouterService openRouterService, GameEstimationService gameEstimationService)
     {
         _pdfService = pdfService;
         _aiService = aiService;
         _openRouterService = openRouterService;
+        _gameEstimationService = gameEstimationService;
     }
 
     public IActionResult Index()
@@ -39,9 +42,9 @@ public class HomeController : Controller
             using var stream = pdfFile.OpenReadStream();
             var extractedText = await _pdfService.ExtractTextFromPdfAsync(stream);
             
-            var summary = await _aiService.SummarizeTextAsync(extractedText, maxWords: 250);
+            var estimationResult = await _gameEstimationService.EstimateGameFeaturesAsync(extractedText);
             
-            TempData["Summary"] = summary;
+            TempData["EstimationResult"] = JsonSerializer.Serialize(estimationResult);
             TempData["FileName"] = pdfFile.FileName;
             
             return Ok(new { success = true, redirectUrl = Url.Action("Result") });
@@ -54,8 +57,21 @@ public class HomeController : Controller
 
     public IActionResult Result()
     {
-        ViewBag.Summary = TempData["Summary"] as string ?? "No summary available";
-        ViewBag.FileName = TempData["FileName"] as string ?? "Unknown";
+        var estimationJson = TempData["EstimationResult"] as string;
+        var fileName = TempData["FileName"] as string ?? "Unknown";
+        
+        if (string.IsNullOrEmpty(estimationJson))
+        {
+            ViewBag.FileName = fileName;
+            ViewBag.Error = "No estimation data available";
+            return View();
+        }
+
+        var estimationResult = JsonSerializer.Deserialize<Models.GameEstimationResult>(estimationJson);
+        
+        ViewBag.FileName = fileName;
+        ViewBag.EstimationResult = estimationResult;
+        
         return View();
     }
 
